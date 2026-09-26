@@ -1,0 +1,68 @@
+[
+  {
+    "name": "googleupdate.exe",
+    "category": "bloat",
+    "description": "Google's background updater for Chrome and other Google apps. Safe to lower priority; it runs silently.",
+    "path_hint": "Google"
+  },
+  {
+    "name": "msedgeupdate.exe",
+    "category": "bloat",
+    "description": "Microsoft Edge's background updater. Runs periodically and is safe to deprioritise.",
+    "path_hint": ""
+  },
+  {
+    "name": "onedrive.exe",
+    "category": "useful_background",
+    "description": "Microsoft OneDrive sync client. Uses disk and network when syncing; can be slowed with Efficiency Mode.",
+    "path_hint": ""
+  },
+  {
+    "name": "searchindexer.exe",
+    "category": "useful_background",
+    "description": "Windows Search indexer. CPU- and disk-intensive during initial indexing; safe to suspend temporarily.",
+    "path_hint": ""
+  },
+  {
+    "name": "antimalware service executable",
+    "category": "security",
+    "description": "Windows Defender real-time protection (MsMpEng). Never touch this.",
+    "path_hint": ""
+  },
+  {
+    "name": "msmpeng.exe",
+    "category": "security",
+    "description": "Windows Defender antimalware engine. Protected — do not act on it.",
+    "path_hint": ""
+  },
+  {
+    "name": "chrome.exe",
+    "category": "user_app",
+    "description": "Google Chrome browser. Each tab and extension is a separate process; the main process holds all of them.",
+    "path_hint": ""
+  },
+  {
+    "name": "firefox.exe",
+    "category": "user_app",
+    "description": "Mozilla Firefox browser.",
+    "path_hint": ""
+  },
+  {
+    "name": "discord.exe",
+    "category": "user_app",
+    "description": "Discord desktop client. Runs multiple helper processes; the main window process is the one to act on.",
+    "path_hint": ""
+  },
+  {
+    "name": "steam.exe",
+    "category": "useful_background",
+    "description": "Steam game client. Background process handles friends, downloads, and updates.",
+    "path_hint": ""
+  },
+  {
+    "name": "updater.exe",
+    "category": "bloat",
+    "description": "Generic software updater from an unknown vendor.",
+    "path_hint": ""
+  }
+]
