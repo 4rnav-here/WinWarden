@@ -5,14 +5,11 @@ All action tools call check_protection and verify_identity before acting.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import psutil
 
 from optimizer.models import ProcessRef
-
-if TYPE_CHECKING:
-    pass
 
 
 # Processes whose termination can cause an immediate BSOD or break the desktop.
@@ -43,7 +40,6 @@ _PROTECTED_NAMES: frozenset[str] = frozenset({
     "system idle process",
     "system",
     "secure system",
-    "memory compression",
 })
 
 # Windows service accounts — processes running as these are managed by SCM.

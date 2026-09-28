@@ -2,19 +2,31 @@
   {
     "name": "googleupdate.exe",
     "category": "bloat",
-    "description": "Google's background updater for Chrome and other Google apps. Safe to lower priority; it runs silently.",
-    "path_hint": "Google"
+    "description": "Google's background updater for Chrome and other Google apps. Safe to lower priority; runs silently.",
+    "path_hint": ""
   },
   {
     "name": "msedgeupdate.exe",
     "category": "bloat",
-    "description": "Microsoft Edge's background updater. Runs periodically and is safe to deprioritise.",
+    "description": "Microsoft Edge background updater. Runs periodically and is safe to deprioritise.",
+    "path_hint": ""
+  },
+  {
+    "name": "updater.exe",
+    "category": "bloat",
+    "description": "Google software background updater.",
+    "path_hint": "Google"
+  },
+  {
+    "name": "updater.exe",
+    "category": "bloat",
+    "description": "Generic background updater from an unknown vendor.",
     "path_hint": ""
   },
   {
     "name": "onedrive.exe",
     "category": "useful_background",
-    "description": "Microsoft OneDrive sync client. Uses disk and network when syncing; can be slowed with Efficiency Mode.",
+    "description": "Microsoft OneDrive sync client. Uses disk and network while syncing; Efficiency Mode slows it without breaking sync.",
     "path_hint": ""
   },
   {
@@ -38,7 +50,7 @@
   {
     "name": "chrome.exe",
     "category": "user_app",
-    "description": "Google Chrome browser. Each tab and extension is a separate process; the main process holds all of them.",
+    "description": "Google Chrome browser. Each tab and extension is a separate process; the main process holds them all.",
     "path_hint": ""
   },
   {
@@ -48,21 +60,93 @@
     "path_hint": ""
   },
   {
+    "name": "msedge.exe",
+    "category": "user_app",
+    "description": "Microsoft Edge browser.",
+    "path_hint": ""
+  },
+  {
     "name": "discord.exe",
     "category": "user_app",
-    "description": "Discord desktop client. Runs multiple helper processes; the main window process is the one to act on.",
+    "description": "Discord desktop client. Runs several helper processes; Efficiency Mode works well on background instances.",
     "path_hint": ""
   },
   {
     "name": "steam.exe",
     "category": "useful_background",
-    "description": "Steam game client. Background process handles friends, downloads, and updates.",
+    "description": "Steam game client. The background process handles friends, downloads, and updates.",
     "path_hint": ""
   },
   {
-    "name": "updater.exe",
+    "name": "epicgameslauncher.exe",
     "category": "bloat",
-    "description": "Generic software updater from an unknown vendor.",
+    "description": "Epic Games Launcher. Often auto-starts and runs idle in the background; safe to lower priority.",
+    "path_hint": ""
+  },
+  {
+    "name": "nvidia share.exe",
+    "category": "bloat",
+    "description": "NVIDIA GeForce Experience overlay and game capture. High idle CPU; safe to suspend when not gaming.",
+    "path_hint": ""
+  },
+  {
+    "name": "nvcontainer.exe",
+    "category": "driver_helper",
+    "description": "NVIDIA container process for GeForce Experience. Supports overlay and telemetry.",
+    "path_hint": ""
+  },
+  {
+    "name": "adobeupdateservice.exe",
+    "category": "bloat",
+    "description": "Adobe update service. Checks for updates in the background; safe to lower priority.",
+    "path_hint": ""
+  },
+  {
+    "name": "acrotray.exe",
+    "category": "bloat",
+    "description": "Adobe Acrobat tray assistant. Sits in the system tray to speed up Acrobat launch; safe to close.",
+    "path_hint": ""
+  },
+  {
+    "name": "teams.exe",
+    "category": "user_app",
+    "description": "Microsoft Teams. Can use significant CPU during idle; Efficiency Mode helps when minimised.",
+    "path_hint": ""
+  },
+  {
+    "name": "slack.exe",
+    "category": "user_app",
+    "description": "Slack desktop client. Background process handles notifications.",
+    "path_hint": ""
+  },
+  {
+    "name": "dropbox.exe",
+    "category": "useful_background",
+    "description": "Dropbox sync client. Uses disk when syncing; safe to lower priority.",
+    "path_hint": ""
+  },
+  {
+    "name": "spotify.exe",
+    "category": "user_app",
+    "description": "Spotify music client. Background process caches audio; safe to lower priority when not actively listening.",
+    "path_hint": ""
+  },
+  {
+    "name": "code.exe",
+    "category": "user_app",
+    "description": "Visual Studio Code editor.",
+    "path_hint": ""
+  },
+  {
+    "name": "wuauclt.exe",
+    "category": "useful_background",
+    "description": "Windows Update client. Runs during update downloads; safe to lower priority temporarily.",
+    "path_hint": ""
+  },
+  {
+    "name": "wsappx",
+    "category": "useful_background",
+    "description": "Windows Store app updates and licensing. Briefly active during Store updates.",
     "path_hint": ""
   }
 ]

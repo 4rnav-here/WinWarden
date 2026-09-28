@@ -2,7 +2,9 @@
 .claude/
 
 # Documentation (generated overviews, not source)
-*.md
+Tools_spec.md
+OVERVIEW.md
+
 
 # Virtual environment
 .venv/

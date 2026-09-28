@@ -65,6 +65,11 @@ class FakeProcessProvider:
         p = self._processes.get(pid)
         return p.has_window if p else False
 
+    def get_windows(self, pid: int) -> list[int]:
+        """Return a fake list of HWNDs if the process has a window."""
+        p = self._processes.get(pid)
+        return [1000 + pid] if (p is not None and p.has_window) else []
+
     # ── mutating ops (recorded, never touch the OS) ───────────────────────
 
     def set_priority(self, pid: int, priority: int) -> None:

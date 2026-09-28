@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -39,3 +41,13 @@ class ProcessInfo(BaseModel):
     # Populated only by get_process_details(), empty/None for list_processes()
     parent_name: str = ""
     uptime_s: float | None = None
+
+
+class KnownProcess(BaseModel):
+    name: str
+    category: Literal[
+        "core_system", "security", "driver_helper",
+        "user_app", "useful_background", "bloat",
+    ]
+    description: str
+    path_hint: str = ""
