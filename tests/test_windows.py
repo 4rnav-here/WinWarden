@@ -3,7 +3,7 @@ import os
 import pytest
 
 from optimizer.platform import IS_WINDOWS
-from optimizer.tools.windows import get_foreground_pid, get_process_windows, is_hung
+from optimizer.tools.windows import get_foreground_pid, get_process_windows, has_windowed_ancestor, is_hung
 
 
 def test_get_foreground_pid_returns_int_or_none():
@@ -64,3 +64,22 @@ def test_non_windows_is_hung_is_false():
     if IS_WINDOWS:
         pytest.skip("Non-Windows only")
     assert is_hung(1) is False
+
+
+# ── has_windowed_ancestor ──────────────────────────────────────────────────────
+
+def test_has_windowed_ancestor_returns_bool():
+    import os
+    result = has_windowed_ancestor(os.getpid())
+    assert isinstance(result, bool)
+
+
+def test_has_windowed_ancestor_nonexistent_pid():
+    # Must not raise — returns False on any access error.
+    assert has_windowed_ancestor(99_999_999) is False
+
+
+def test_non_windows_has_windowed_ancestor_false():
+    if IS_WINDOWS:
+        pytest.skip("Non-Windows only")
+    assert has_windowed_ancestor(1) is False

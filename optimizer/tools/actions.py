@@ -14,13 +14,22 @@ from optimizer import journal
 from optimizer.models import ProcessRef, ToolResult
 from optimizer.platform import IS_WINDOWS, kernel32, user32
 from optimizer.tools.safety import check_protection, verify_identity
-from optimizer.tools.windows import get_process_windows
+from optimizer.tools.audio import get_audio_pids
+from optimizer.tools.windows import get_foreground_pid, get_process_windows, has_windowed_ancestor
 
 # ── Windows constants ──────────────────────────────────────────────────────────
 
 _BELOW_NORMAL  = getattr(psutil, "BELOW_NORMAL_PRIORITY_CLASS", 10)
 _IDLE          = getattr(psutil, "IDLE_PRIORITY_CLASS", 19)
 _NORMAL        = getattr(psutil, "NORMAL_PRIORITY_CLASS", 32)
+# Priorities at or below NORMAL are safe to demote; anything higher is self-declared important.
+_SAFE_PRIORITIES: frozenset[int] = frozenset(
+    v for v in [
+        getattr(psutil, "IDLE_PRIORITY_CLASS", None),
+        getattr(psutil, "BELOW_NORMAL_PRIORITY_CLASS", None),
+        getattr(psutil, "NORMAL_PRIORITY_CLASS", None),
+    ] if v is not None
+)
 _WM_CLOSE      = 0x0010
 _OPEN_FLAGS    = 0x0200 | 0x1000   # PROCESS_SET_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION
 _PPTL_CLASS    = 4                  # ProcessPowerThrottling info class
@@ -72,6 +81,26 @@ def _safety(ref: ProcessRef, provider) -> str | None:
     reason = check_protection(ref.name, ref.exe, _username(ref, provider), ref.pid)
     if reason:
         return reason
+
+    if provider is None:
+        fg = get_foreground_pid()
+        if fg is not None and fg == ref.pid:
+            return f"PID {ref.pid} ({ref.name!r}) is the foreground process"
+
+        if has_windowed_ancestor(ref.pid):
+            return f"{ref.name!r} is a child of a windowed process"
+
+        if ref.pid in get_audio_pids():
+            return f"{ref.name!r} has an active audio session"
+
+        if _SAFE_PRIORITIES:
+            try:
+                p = int(psutil.Process(ref.pid).nice())
+                if p not in _SAFE_PRIORITIES:
+                    return f"{ref.name!r} has self-declared elevated priority; lower it manually first"
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
     return verify_identity(ref, provider=provider)
 
 
@@ -115,6 +144,19 @@ def _eco_qos(pid: int, on: bool) -> str | None:
         kernel32.CloseHandle(handle)
 
 
+def check_safe(ref: ProcessRef, *, provider=None) -> str | None:
+    """Return the block reason, or None if all basic actions are safe to apply."""
+    return _safety(ref, provider)
+
+
+def _err_msg(exc: Exception) -> str:
+    if isinstance(exc, psutil.AccessDenied):
+        return "Access denied — run WinWarden as Administrator to manage system services"
+    if isinstance(exc, psutil.NoSuchProcess):
+        return "Process no longer exists"
+    return str(exc)
+
+
 # ── Action tools ──────────────────────────────────────────────────────────────
 
 def lower_priority(
@@ -137,8 +179,9 @@ def lower_priority(
         journal.update_status(entry_id, "active")
         return ToolResult(ok=True, undo=undo)
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError) as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)
 
 
 def set_efficiency_mode(
@@ -168,14 +211,15 @@ def set_efficiency_mode(
             provider.set_efficiency_mode(ref.pid, on)
         else:
             if err := _eco_qos(ref.pid, on):
-                journal.update_status(entry_id, "failed")
+                journal.update_status(entry_id, "failed", note=err)
                 return ToolResult(ok=False, reason=err)
 
         journal.update_status(entry_id, "active" if on else "done")
         return ToolResult(ok=True, undo=undo if on else {})
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError) as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)
 
 
 def suspend(
@@ -204,8 +248,9 @@ def suspend(
         journal.update_status(entry_id, "active")
         return ToolResult(ok=True, undo=undo)
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError) as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)
 
 
 def close_gracefully(
@@ -239,8 +284,9 @@ def close_gracefully(
         journal.update_status(entry_id, "done")
         return ToolResult(ok=True)
     except Exception as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)
 
 
 def terminate(
@@ -268,8 +314,9 @@ def terminate(
         journal.update_status(entry_id, "done")
         return ToolResult(ok=True)
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError) as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)
 
 
 # ── Undo tools ────────────────────────────────────────────────────────────────
@@ -290,8 +337,9 @@ def restore_priority(
         journal.update_status(entry_id, "done")
         return ToolResult(ok=True)
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError) as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)
 
 
 def resume(
@@ -313,5 +361,6 @@ def resume(
         journal.update_status(entry_id, "done")
         return ToolResult(ok=True)
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError) as exc:
-        journal.update_status(entry_id, "failed")
-        return ToolResult(ok=False, reason=str(exc))
+        msg = _err_msg(exc)
+        journal.update_status(entry_id, "failed", note=msg)
+        return ToolResult(ok=False, reason=msg)

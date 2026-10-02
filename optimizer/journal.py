@@ -77,6 +77,16 @@ class JournalEntry:
     note: str
 
 
+_VALID_PRIORITIES = {19, 10, 32, 64, 128, 256, 16384, 32768}
+
+def _safe_priority(value) -> int:
+    try:
+        p = int(value)
+    except (TypeError, ValueError):
+        return 32
+    return p if p in _VALID_PRIORITIES else 32
+
+
 def _row_to_entry(row: sqlite3.Row) -> JournalEntry:
     return JournalEntry(
         id=row["id"],
@@ -118,10 +128,22 @@ def record(
     return cur.lastrowid  # type: ignore[return-value]
 
 
-def update_status(entry_id: int, status: str) -> None:
+def update_status(entry_id: int, status: str, note: str = "") -> None:
     db = _conn()
-    db.execute("UPDATE journal SET status = ? WHERE id = ?", (status, entry_id))
+    if note:
+        db.execute("UPDATE journal SET status = ?, note = ? WHERE id = ?",
+                   (status, note, entry_id))
+    else:
+        db.execute("UPDATE journal SET status = ? WHERE id = ?", (status, entry_id))
     db.commit()
+
+
+def recent(n: int = 20) -> list[JournalEntry]:
+    """Return the n most-recent non-dry_run journal entries, newest first."""
+    rows = _conn().execute(
+        "SELECT * FROM journal WHERE status != 'dry_run' ORDER BY id DESC LIMIT ?", (n,)
+    ).fetchall()
+    return [_row_to_entry(r) for r in rows]
 
 
 def undoable() -> list[JournalEntry]:
@@ -165,14 +187,14 @@ def undo(entry: JournalEntry) -> None:
     fn = entry.undo_json.get("fn", "")
 
     if fn == "restore_priority":
-        priority = entry.undo_json.get("priority", 32)
+        priority = _safe_priority(entry.undo_json.get("priority"))
         result = actions.restore_priority(ref, priority)
 
     elif fn == "resume":
         result = actions.resume(ref)
 
     elif fn == "restore_efficiency_mode":
-        priority = entry.undo_json.get("priority", 32)
+        priority = _safe_priority(entry.undo_json.get("priority"))
         r1 = actions.set_efficiency_mode(ref, on=False)
         r2 = actions.restore_priority(ref, priority)
         # If process is gone, both fail with "no longer exists" — that's fine.

@@ -34,7 +34,8 @@ class ProcessInfo(BaseModel):
     username: str
     ppid: int
     cpu_percent: float          # % of one core since last sample
-    private_mb: float
+    private_mb: float           # commit size — virtual memory reserved exclusively for this process
+    wset_mb: float = 0.0        # working set — physical RAM currently occupied (includes shared pages)
     io_bytes_total: int
     num_threads: int
     priority: int | None

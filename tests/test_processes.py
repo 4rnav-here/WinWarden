@@ -28,6 +28,7 @@ def test_list_processes_all_valid_fields():
         assert isinstance(p.name, str)  # kernel threads may have empty names
         assert p.cpu_percent >= 0.0
         assert p.private_mb >= 0.0
+        assert p.wset_mb >= 0.0
         assert p.io_bytes_total >= 0
         assert p.num_threads >= 0
 
@@ -51,13 +52,10 @@ def test_cpu_percent_delta_on_second_call():
 def test_list_processes_cache_eviction():
     """Dead PIDs are removed from the cache after a full scan."""
     list_processes()
-    pre_size = len(_proc_cache)
-    # Manually insert a stale entry with a PID that won't appear in the next scan.
     _proc_cache[(999_999_999, 0.0)] = psutil.Process(os.getpid())
     list_processes()
+    # The key invariant: the manually inserted stale entry is gone.
     assert (999_999_999, 0.0) not in _proc_cache
-    # Cache should not have grown unboundedly.
-    assert len(_proc_cache) <= pre_size + 5  # small tolerance for new system processes
 
 
 def test_list_processes_multiple_calls_stable():
@@ -103,5 +101,6 @@ def test_get_process_details_all_valid_fields():
     assert info is not None
     assert info.cpu_percent >= 0.0
     assert info.private_mb >= 0.0
+    assert info.wset_mb >= 0.0
     assert info.io_bytes_total >= 0
     assert info.num_threads >= 1

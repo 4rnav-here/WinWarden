@@ -1,11 +1,13 @@
 """
-get_foreground_pid(), get_process_windows(), is_hung() — read-only window queries.
-All three return None/empty/{}/False on non-Windows.
+get_foreground_pid(), get_process_windows(), is_hung(), has_windowed_ancestor() — read-only window queries.
+All return None/empty/{}/False on non-Windows.
 """
 from __future__ import annotations
 
 import ctypes
 import ctypes.wintypes
+
+import psutil
 
 from optimizer.platform import IS_WINDOWS, user32
 
@@ -94,3 +96,26 @@ def is_hung(pid: int) -> bool:
         return False
     windows = get_process_windows()
     return any(user32.IsHungAppWindow(hwnd) for hwnd in windows.get(pid, []))
+
+
+def has_windowed_ancestor(pid: int, max_depth: int = 3) -> bool:
+    """
+    True if any ancestor process (up to max_depth levels up) owns a visible window.
+    Protects compiler/subprocess children of IDEs and other windowed parents.
+    Returns False on non-Windows or any access error.
+    """
+    if not IS_WINDOWS or user32 is None:
+        return False
+    windowed = get_process_windows()
+    try:
+        proc = psutil.Process(pid)
+        for _ in range(max_depth):
+            ppid = proc.ppid()
+            if ppid in (0, 4):
+                break
+            if ppid in windowed:
+                return True
+            proc = psutil.Process(ppid)
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass
+    return False
